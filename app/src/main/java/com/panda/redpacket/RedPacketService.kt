@@ -16,6 +16,7 @@ import android.text.TextUtils
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.widget.TextView
 import android.widget.Toast
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -96,10 +97,22 @@ class RedPacketService : AccessibilityService() {
                 //判断是否是微信聊天界面
                 if (LAUCHER == className) {
                     //获取当前聊天页面的根布局
-                    val rootNode = rootInActiveWindow
-                    //开始找红包
-                    Log.d(TAG, "开始找红包")
-                    findRedPacket(rootNode)
+                    var rootNode = rootInActiveWindow
+//                    val rootNode = windows
+                    if (null != rootNode) {
+                        //开始找红包
+                        Log.d(TAG, "开始找红包")
+                        findRedPacket(rootNode)
+                        Log.d(TAG, "开始找红包 over")
+//                        rootNode.forEach {  findRedPacket(it.root) }
+                    } else {
+                        Log.e(TAG, "rootNode is null")
+                        Thread.sleep(100)
+                        Log.d(TAG, "开始延迟找红包")
+                        rootNode = rootInActiveWindow
+                        findRedPacket(rootNode)
+                        Log.d(TAG, "开始延迟找红包 over")
+                    }
                 }
 
                 //判断是否是显示‘开’的那个红包界面
@@ -108,6 +121,14 @@ class RedPacketService : AccessibilityService() {
                     //开始开红包
                     Log.d(TAG, "开始开红包")
                     openRedPacket(rootNode)
+                    Log.d(TAG, "开红包结束")
+                } else {
+                    Log.e(TAG, "rootNode is null")
+                    Log.d(TAG, "开始延迟开红包")
+                    Thread.sleep(100)
+                    val rootNode = rootInActiveWindow
+                    openRedPacket(rootNode)
+                    Log.d(TAG, "开始延迟开红包 over")
                 }
 
                 //判断是否是红包领取后的详情界面
@@ -128,10 +149,7 @@ class RedPacketService : AccessibilityService() {
     /**
      * 遍历查找红包
      */
-    private fun findRedPacket(rootNode: AccessibilityNodeInfo?) {
-        if (rootNode == null) {
-            return
-        }
+    private fun findRedPacket(rootNode: AccessibilityNodeInfo) {
         for (i in rootNode.childCount - 1 downTo 0) {
             val node = rootNode.getChild(i) ?: continue
             //如果node为空则跳过该节点
@@ -168,14 +186,36 @@ class RedPacketService : AccessibilityService() {
      */
     private fun openRedPacket(rootNode: AccessibilityNodeInfo) {
         Log.d(TAG, "openRedPacket----")
+        var needWait = false
         for (i in 0 until rootNode.childCount) {
             val node = rootNode.getChild(i)
             Log.d(TAG, "son  : $node")
+            Log.d(TAG, "son node cls  : ${node.className}")
+            try {
+//                var cls = Class.forName(node.className as String)
+//                if(TextView::class.java.isAssignableFrom(cls)){
+//                    Log.d(TAG, "son node txt : ${node.text}")
+//                }
+                val txt = node.text
+                Log.d(TAG, "son node txt  : $txt")
+                if (null != txt && txt.contains("正在加载")) {
+                    needWait = true
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
             if ("android.widget.Button" == node.className) {
+                Log.d(TAG, "------  点开红包  -----")
                 node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
                 isOpenDetail = true
+                needWait = false
             }
             openRedPacket(node)
+        }
+        if (needWait) {
+            Thread.sleep(100)
+            openRedPacket(rootNode)
         }
     }
 

@@ -13,7 +13,8 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="1.系统无障碍，打开本应用的权限(最好没有启动应用时检测)\n2.微信通知显示详情\n3.微信版本:7.0.10\n4.无障碍的开关控制打开" />
+        android:text="1.系统无障碍，打开本应用的权限\n2.微信通知显示详情\n3.微信版本:7.0.10\n4.无障碍的开关控制打开
+\n5.当前不可处于微信界面内!!!" />
 
 
     <LinearLayout
