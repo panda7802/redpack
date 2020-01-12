@@ -65,6 +65,9 @@ class RedPacketService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         val eventType = event.eventType
         Log.d(TAG, "et : $eventType")
+        if (!MainActivity.onOff) {
+            return
+        }
         when (eventType) {
             //通知栏来信息，判断是否含有微信红包字样，是的话跳转
             AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED -> {
