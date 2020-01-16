@@ -16,7 +16,6 @@ import android.text.TextUtils
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import android.widget.TextView
 import android.widget.Toast
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -61,6 +60,8 @@ class RedPacketService : AccessibilityService() {
      * KeyguardManager.KeyguardLock对象
      */
     private var keyguardLock: KeyguardManager.KeyguardLock? = null
+
+    private var countOpen = 0;
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
@@ -116,16 +117,21 @@ class RedPacketService : AccessibilityService() {
                 }
 
                 //判断是否是显示‘开’的那个红包界面
+                var delayCount = 0
                 if (LUCKEY_MONEY_RECEIVER.trim() == className.trim()) {
                     val rootNode = rootInActiveWindow
                     //开始开红包
                     Log.d(TAG, "开始开红包")
+                    countOpen = 0
                     openRedPacket(rootNode)
                     Log.d(TAG, "开红包结束")
-                } else {
+                }
+                while (delayCount < 3) {
+                    delayCount++
                     Log.e(TAG, "rootNode is null")
-                    Log.d(TAG, "开始延迟开红包")
+                    Log.d(TAG, "开始延迟开红包 : $delayCount")
                     Thread.sleep(100)
+                    countOpen = 0
                     val rootNode = rootInActiveWindow
                     openRedPacket(rootNode)
                     Log.d(TAG, "开始延迟开红包 over")
@@ -185,8 +191,14 @@ class RedPacketService : AccessibilityService() {
      * 开始打开红包
      */
     private fun openRedPacket(rootNode: AccessibilityNodeInfo) {
-        Log.d(TAG, "openRedPacket----")
+        Log.d(TAG, "openRedPacket---- $countOpen")
+        if (countOpen > 3) {
+            Log.e(TAG, "openRedPacket failed")
+            return
+        }
+        countOpen++
         var needWait = false
+        Log.d(TAG, "openRedPacket childCount : ${rootNode.childCount}")
         for (i in 0 until rootNode.childCount) {
             val node = rootNode.getChild(i)
             Log.d(TAG, "son  : $node")
@@ -215,7 +227,7 @@ class RedPacketService : AccessibilityService() {
         }
         if (needWait) {
             Thread.sleep(100)
-            openRedPacket(rootNode)
+            openRedPacket(rootInActiveWindow)
         }
     }
 
